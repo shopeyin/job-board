@@ -39,11 +39,11 @@ exports.getAllUsers = (request, response) => {
       data: {
         users: [
           {
-            name: "Ola",
+            name: "tommy",
             age: "3",
           },
           {
-            name: "FOla",
+            name: "dammy",
             age: "31",
           },
         ],
