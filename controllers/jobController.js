@@ -8,7 +8,6 @@ exports.lastXdays = async (request, response, next) => {
       const dateThreshold = new Date(
         new Date().setDate(new Date().getDate() - lastDays)
       );
-
       request.query.created_at = { $gte: dateThreshold };
     }
   }
