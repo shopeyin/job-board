@@ -21,8 +21,8 @@ exports.addRequestTime = (request, response, next) => {
 
 // CHECKING PARAMS MIDDLEWARE
 exports.checkID = (request, response, next, val) => {
-  console.log("checking params value",val, request.params, );
-  if (val === '5') {
+  console.log("checking params value", val, request.params);
+  if (val === "5") {
     return response
       .status(400)
       .json({ status: "failed", message: "Invalid Id" });
@@ -58,7 +58,6 @@ exports.getAllUsers = (request, response) => {
 };
 exports.getUser = (request, response) => {
   try {
-    
     response.status(200).json({
       status: "success",
       data: {
