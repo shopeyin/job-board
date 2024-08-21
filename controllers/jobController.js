@@ -1,8 +1,6 @@
 const Job = require("../models/jobModel");
 
-
 exports.lastXdays = async (request, response, next) => {
-
   if (request.query.lastDays) {
     // Handle filtering by last X days
     const lastDays = parseInt(request.query.lastDays, 10); // Default to 7 days if not provided
@@ -10,7 +8,8 @@ exports.lastXdays = async (request, response, next) => {
       const dateThreshold = new Date(
         new Date().setDate(new Date().getDate() - lastDays)
       );
-      request.query.created_at = { $gte: dateThreshold }; // Filter by created_at field
+
+      request.query.created_at = { $gte: dateThreshold };
     }
   }
 
