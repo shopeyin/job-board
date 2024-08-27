@@ -1,19 +1,33 @@
 const express = require("express");
 const jobController = require("./../controllers/jobController");
-
+const authController = require("../controllers/authController");
 const router = express.Router();
 
+router
+  .route("/last-x-days")
+  .get(jobController.lastXdays, jobController.getAllJobs);
 
-router.route('/last-x-days').get(jobController.lastXdays, jobController.getAllJobs)
-
-router.route("/")
-  .get( jobController.getAllJobs)
-  .post( jobController.createJob);
+router
+  .route("/")
+  .get(authController.protect, jobController.getAllJobs)
+  .post(
+    authController.protect,
+    authController.restrictTo("admin", "employer"),
+    jobController.createJob
+  );
 
 router
   .route("/:id")
   .get(jobController.getJob)
-  .patch(jobController.updateJob)
-  .delete(jobController.deleteJob);
+  .patch(
+    authController.protect,
+    authController.restrictTo("admin", "employer"),
+    jobController.updateJob
+  )
+  .delete(
+    authController.protect,
+    authController.restrictTo("admin", "employer"),
+    jobController.deleteJob
+  );
 
 module.exports = router;
