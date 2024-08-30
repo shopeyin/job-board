@@ -1,25 +1,20 @@
 const express = require("express");
 const applicationController = require("./../controllers/applicationController");
 const authController = require("../controllers/authController");
-const router = express.Router();
+
+const router = express.Router({ mergeParams: true });
 
 router
   .route("/")
-  .get(authController.protect,  applicationController.getAllJobsApplications)
+  .get(authController.protect, applicationController.getAllJobsApplications)
   .post(
     authController.protect,
     authController.restrictTo("job_seeker"),
     applicationController.createJobApplication
-);
-  
+  );
+
 router
-  .route("/:jobId")
-  .get(authController.protect,applicationController.getAllJobsApplications)
-   .patch(authController.protect,applicationController.updateJobApplications)
-//   .delete(
-//     authController.protect,
-//     authController.restrictTo("admin", "employer"),
-//     jobController.deleteJob
-//   );
+  .route("/:applicationId")
+  .patch(authController.protect, applicationController.updateJobApplications);
 
 module.exports = router;

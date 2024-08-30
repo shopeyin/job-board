@@ -10,6 +10,7 @@ const JobSchema = new mongoose.Schema({
     maxlength: [100, "Job title cannot exceed 100 characters"],
     trim: true,
   },
+  slug: String,
   description: {
     type: String,
     required: [true, "Job description is required"],
@@ -93,5 +94,12 @@ const JobSchema = new mongoose.Schema({
 });
 
 // JobSchema.index({ title: 'text', description: 'text', requirements: 'text' });
+
+// DOCUMENT MIDDLEWARE: runs before .save() and .create()
+JobSchema.pre('save', function(next) {
+  this.slug = slugify(this.title, { lower: true });
+  next();
+});
+
 
 module.exports = mongoose.model("Job", JobSchema);

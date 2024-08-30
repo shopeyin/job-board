@@ -19,6 +19,60 @@ exports.getAllUsers = catchAsync(async (request, response, next) => {
   });
 });
 
+exports.getAllJobSeekers = catchAsync(async (request, response, next) => {
+  const queryObj = { ...request.query };
+  const excludedFields = ["page", "sort", "limit", "fields"];
+  excludedFields.forEach((el) => delete queryObj[el]);
+  queryObj.role = "job_seeker";
+
+  // if (queryObj.skills) {
+  //   queryObj.skills = { $all: queryObj.skills.split(",") };
+  // }
+
+  if (queryObj.skills) {
+    const skillsArray = queryObj.skills.split(",");
+    queryObj.skills = {
+      $elemMatch: {
+        $in: skillsArray.map((skill) => new RegExp(skill, "i")), // Partial matching with regex for each skill
+      },
+    };
+  }
+
+  if (queryObj.education) {
+    queryObj["education"] = {
+      $elemMatch: { degree: { $regex: queryObj.education, $options: "i" } }, // Partial matching with regex
+    };
+  }
+
+  if (queryObj.experience) {
+    queryObj["workExperience"] = {
+      $elemMatch: {
+        title: { $regex: queryObj.experience, $options: "i" },
+      }, // Partial matching with regex
+    };
+
+    delete queryObj.experience;
+  }
+
+  const jobSeekers = await User.find(queryObj).select("-__v");
+  response.status(200).json({
+    status: "success",
+    results: jobSeekers.length,
+    data: { jobSeekers },
+  });
+});
+exports.getJobSeeker = catchAsync(async (request, response, next) => {
+  const jobSeeker = await User.findOne({
+    _id: request.params.id,
+    role: "job_seeker",
+  }).select("-__v");
+  response.status(200).json({
+    status: "success",
+
+    data: { jobSeeker },
+  });
+});
+
 exports.updateUser = (request, response) => {
   response.status(500).json({
     status: "error",
@@ -37,8 +91,14 @@ exports.updateMe = catchAsync(async (request, response, next) => {
     );
   }
 
-  // // 2) Filtered out unwanted fields names that are not allowed to be updated
-  const filteredBody = filterObj(request.body, "name", "email");
+  const filteredBody = filterObj(
+    request.body,
+    "name",
+    "email",
+    "skills",
+    "workExperience",
+    "education"
+  ); // allowed fields;
   // if (req.file) filteredBody.photo = req.file.filename;
 
   // 3) Update user document
@@ -49,13 +109,22 @@ exports.updateMe = catchAsync(async (request, response, next) => {
       new: true,
       runValidators: true,
     }
-  );
+  ).select("-__v");
 
   response.status(200).json({
     status: "success",
     data: {
       user: updatedUser,
     },
+  });
+});
+
+exports.getMe = catchAsync(async (request, response, next) => {
+  let user = await User.findById(request.user.id);
+
+  response.status(200).json({
+    status: "success",
+    data: user,
   });
 });
 
@@ -68,13 +137,18 @@ exports.deleteMe = catchAsync(async (request, response, next) => {
   });
 });
 
-exports.getUser = (request, response) => {
-  response.status(500).json({
-    status: "error",
-
-    message: "This route is not yet defined",
+exports.getUser = catchAsync(async (request, response) => {
+  const user = await User.findById(request.params.id).populate("savedJobs");
+  if (!user) {
+    return next(new AppError("No job found with that ID", 404));
+  }
+  response.status(200).json({
+    status: "success",
+    data: {
+      user,
+    },
   });
-};
+});
 
 exports.createUser = (request, response) => {
   response.status(500).json({

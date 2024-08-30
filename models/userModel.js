@@ -3,49 +3,127 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const validator = require("validator");
 
-const userSchema = new mongoose.Schema({
-  name: {
+const workExperienceSchema = new mongoose.Schema({
+  company: {
     type: String,
-    required: [true, "Please tell us your name!"],
+    required: [true, "Please provide the company's name"],
   },
-  email: {
+  title: {
     type: String,
-    required: [true, "Please provide your email"],
-    unique: true,
-    lowercase: true,
-    validate: [validator.isEmail, "Please provide a valid email"],
+    required: [true, "Please provide your job title"],
   },
-  role: {
-    type: String,
-    enum: ["job_seeker", "employer", "admin"],
-    default: "job_seeker",
+  startDate: {
+    type: Date,
+    required: [true, "Please provide the start date"],
   },
-  password: {
-    type: String,
-    required: [true, "Please provide a password"],
-    minlength: 8,
-    select: false,
+  endDate: {
+    type: Date,
   },
-  passwordConfirm: {
-    type: String,
-    required: [true, "Please confirm your password"],
-    validate: {
-      // This only works on CREATE and SAVE!!!
-      validator: function (el) {
-        return el === this.password;
-      },
-      message: "Passwords are not the same!",
-    },
-  },
-  passwordChangedAt: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
-
-  active: {
+  current: {
     type: Boolean,
-    default: true,
-    select: false,
+    default: false,
   },
+  description: {
+    type: String,
+  },
+});
+
+const educationSchema = new mongoose.Schema({
+  institution: {
+    type: String,
+    required: [true, "Please provide the name of the institution"],
+  },
+  degree: {
+    type: String,
+    required: [true, "Please provide your degree"],
+  },
+  fieldOfStudy: {
+    type: String,
+  },
+  startDate: {
+    type: Date,
+    required: [true, "Please provide the start date"],
+  },
+  endDate: {
+    type: Date,
+  },
+  current: {
+    type: Boolean,
+    default: false,
+  },
+  description: {
+    type: String,
+  },
+});
+
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Please tell us your name!"],
+    },
+    email: {
+      type: String,
+      required: [true, "Please provide your email"],
+      unique: true,
+      lowercase: true,
+      validate: [validator.isEmail, "Please provide a valid email"],
+    },
+    role: {
+      type: String,
+      enum: ["job_seeker", "employer", "admin"],
+      default: "job_seeker",
+    },
+    password: {
+      type: String,
+      required: [true, "Please provide a password"],
+      minlength: 8,
+      select: false,
+    },
+    passwordConfirm: {
+      type: String,
+      required: [true, "Please confirm your password"],
+      validate: {
+        // This only works on CREATE and SAVE!!!
+        validator: function (el) {
+          return el === this.password;
+        },
+        message: "Passwords are not the same!",
+      },
+    },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
+
+    active: {
+      type: Boolean,
+      default: true,
+      select: false,
+    },
+
+    resume: {
+      type: String,
+    },
+
+    skills: {
+      type: [String],
+      required: function () {
+        return this.role === "job_seeker";
+      },
+    },
+    workExperience: [workExperienceSchema],
+    education: [educationSchema],
+  },
+  {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
+
+userSchema.virtual("savedJobs", {
+  ref: "SavedJob",
+  foreignField: "user",
+  localField: "_id",
 });
 
 userSchema.pre("save", async function (next) {
@@ -86,7 +164,7 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
       this.passwordChangedAt.getTime() / 1000,
       10
     );
-    console.log(JWTTimestamp, changedTimestamp,'got here');
+
     return JWTTimestamp < changedTimestamp;
   }
 
@@ -110,5 +188,3 @@ userSchema.methods.createPasswordResetToken = function () {
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;
-
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2Yzk1NWI5YTlkMTg1NzY2Yjk1ZDdlNyJ9.4SnMEBG243kHpov0xts3MxF-X2QwLL-KvdNl5lKOVHw

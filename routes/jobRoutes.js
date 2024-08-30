@@ -1,7 +1,11 @@
 const express = require("express");
 const jobController = require("./../controllers/jobController");
 const authController = require("../controllers/authController");
+const applicationRouter = require("../routes/applicationRoutes");
+
 const router = express.Router();
+
+router.use("/:jobId/applications", applicationRouter)
 
 router
   .route("/last-x-days")
@@ -9,7 +13,7 @@ router
 
 router
   .route("/")
-  .get(authController.protect, jobController.getAllJobs)
+  .get(jobController.getAllJobs)
   .post(
     authController.protect,
     authController.restrictTo("admin", "employer"),
@@ -29,5 +33,6 @@ router
     authController.restrictTo("admin", "employer"),
     jobController.deleteJob
   );
+
 
 module.exports = router;

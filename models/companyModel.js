@@ -12,6 +12,10 @@ const CompanySchema = new mongoose.Schema({
     type: String,
     required: [true, "Location is required"],
   },
+  logo: {
+    type: String,
+    default: "default.jpg",
+  },
   website: {
     type: String,
     match: [/^https?:\/\/[^\s$.?#].[^\s]*$/, "Please enter a valid URL"],

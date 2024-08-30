@@ -19,8 +19,6 @@ exports.lastXdays = async (request, response, next) => {
 };
 
 exports.getAllJobs = catchAsync(async (request, response, next) => {
-  console.log(request.query);
-
   // Copy request.query into queryObj
   const queryObj = { ...request.query };
 
@@ -72,7 +70,9 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
   const skip = (page - 1) * limit;
   query = query.skip(skip).limit(limit);
 
-  // Execute the query
+  // // Execute the query
+  // const jobs = await query.explain();
+
   const jobs = await query;
 
   // Get the total count of documents for pagination info

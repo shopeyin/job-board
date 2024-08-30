@@ -11,6 +11,7 @@ const userRoutes = require("./routes/userRoutes");
 const jobRoutes = require("./routes/jobRoutes");
 const companyRoutes = require("./routes/companyRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
+const savedJobsRoutes = require("./routes/savedJobsRoutes");
 const app = express();
 
 //SECURITY HTTP
@@ -64,6 +65,7 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/applications", applicationRoutes);
+app.use("/api/v1/savejobs", savedJobsRoutes);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
