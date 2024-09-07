@@ -19,8 +19,14 @@ exports.lastXdays = async (request, response, next) => {
 };
 
 exports.getAllJobs = catchAsync(async (request, response, next) => {
+  let filter;
+  if (request.params.id) {
+    filter = { company: request.params.id };
+  }
   // Copy request.query into queryObj
-  const queryObj = { ...request.query };
+  const queryObj = { ...request.query, ...filter };
+
+  console.log(queryObj);
 
   // List of fields to exclude from the query object
   const excludedFields = ["page", "sort", "limit", "fields", "lastDays"];
@@ -42,6 +48,8 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
   if (queryObj.title) {
     queryObj.title = { $regex: queryObj.title, $options: "i" }; // 'i' for case-insensitive
   }
+
+  console.log(queryObj);
 
   // Build the query
   let query = Job.find(queryObj);
@@ -68,7 +76,7 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
   const page = parseInt(request.query.page, 10) || 1; // Default to page 1 if not provided
   const limit = parseInt(request.query.limit, 10) || 10; // Default to 10 results per page if not provided
   const skip = (page - 1) * limit;
-  query = query.skip(skip).limit(limit);
+  query = query.skip(skip).limit(limit).populate("company");
 
   // // Execute the query
   // const jobs = await query.explain();

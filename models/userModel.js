@@ -51,9 +51,6 @@ const educationSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  description: {
-    type: String,
-  },
 });
 
 const userSchema = new mongoose.Schema(

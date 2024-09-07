@@ -41,5 +41,6 @@ const CompanySchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+CompanySchema.index({ created_by: 1 }, { unique: true });
 
 module.exports = mongoose.model("Company", CompanySchema);

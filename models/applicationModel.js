@@ -11,6 +11,7 @@ const ApplicationSchema = new mongoose.Schema({
     ref: "User",
     required: [true, "Applicant ID is required"],
   },
+
   resume: {
     type: String,
     required: [true, "Resume is required"],
@@ -37,4 +38,7 @@ const ApplicationSchema = new mongoose.Schema({
   },
 });
 
+ApplicationSchema.index({ job: 1, applicant: 1 }, { unique: true });
+
 module.exports = mongoose.model("Application", ApplicationSchema);
+

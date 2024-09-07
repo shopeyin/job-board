@@ -12,6 +12,9 @@ const jobRoutes = require("./routes/jobRoutes");
 const companyRoutes = require("./routes/companyRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const savedJobsRoutes = require("./routes/savedJobsRoutes");
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
+
 const app = express();
 
 //SECURITY HTTP
@@ -21,21 +24,23 @@ app.use(helmet());
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:3001", // Your Next.js app's URL
+    credentials: true, // Allow credentials (cookies) to be sent
+  })
+);
 
-const limiter = rateLimit({
-  max: 100,
-  windowMs: 60 * 60 * 1000,
-  message: "Too many requests from this IP, please try again in an hour",
-});
+// app.use(cors(corsOptions));
 
-app.use("/api", limiter);
+// const limiter = rateLimit({
+//   max: 100,
+//   windowMs: 60 * 60 * 1000,
+//   message: "Too many requests from this IP, please try again in an hour",
+// });
 
-app.use((request, response, next) => {
-  console.log(
-    "Hello  from the global middleware, works on every request/route"
-  );
-  next();
-});
+// app.use("/api", limiter);
 
 // body parser
 app.use(express.json({ limit: "10kb" }));
@@ -60,6 +65,20 @@ app.use(hpp());
 //     ],
 //   })
 // );
+
+app.get("/", (req, res) => {
+  // Set a cookie named 'user' with the value 'JohnDoe'
+  res.cookie("user", "JohnDoe");
+  res.send("Cookie set successfully");
+});
+
+app.use((request, response, next) => {
+  console.log(
+    "Hello  from the global middleware, works on every request/route",
+    request.cookies
+  );
+  next();
+});
 
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/jobs", jobRoutes);

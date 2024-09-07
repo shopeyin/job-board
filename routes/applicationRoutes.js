@@ -5,8 +5,15 @@ const authController = require("../controllers/authController");
 const router = express.Router({ mergeParams: true });
 
 router
+  .route("/my-applications")
+  .get(
+    authController.protect,
+    applicationController.getAllApplicationsByApplicant
+  );
+
+router
   .route("/")
-  .get(authController.protect, applicationController.getAllJobsApplications)
+  .get(authController.protect, applicationController.getAllApplicationsByJob)
   .post(
     authController.protect,
     authController.restrictTo("job_seeker"),

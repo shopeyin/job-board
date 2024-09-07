@@ -3,9 +3,11 @@ const jobController = require("./../controllers/jobController");
 const authController = require("../controllers/authController");
 const applicationRouter = require("../routes/applicationRoutes");
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
-router.use("/:jobId/applications", applicationRouter)
+router.use("/:jobId/applications", applicationRouter);
+
+
 
 router
   .route("/last-x-days")
@@ -33,6 +35,5 @@ router
     authController.restrictTo("admin", "employer"),
     jobController.deleteJob
   );
-
 
 module.exports = router;

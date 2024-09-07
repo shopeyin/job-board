@@ -3,16 +3,17 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 
 exports.saveJob = catchAsync(async (request, response, next) => {
+ 
   if (!request.body.jobId) {
     request.body.jobId = request.params.jobId;
   }
 
   if (!request.body.user) {
-    request.body.user = request.user._id;
+    request.body.userId = request.user._id;
   }
   // Check if the job has already been saved by this user
   const existingSavedJob = await SavedJob.findOne({
-    user: request.body.user,
+    user: request.body.userId,
     job: request.body.jobId,
   });
 
@@ -22,11 +23,12 @@ exports.saveJob = catchAsync(async (request, response, next) => {
 
   // Create a new saved job entry for the user
   const savedJob = await SavedJob.create({
-    user: userId,
-    job: jobId,
+    user: request.body.userId,
+    job: request.body.jobId,
   });
+ 
 
-  res.status(201).json({
+  response.status(201).json({
     status: "success",
     data: {
       savedJob,
@@ -35,7 +37,6 @@ exports.saveJob = catchAsync(async (request, response, next) => {
 });
 
 exports.getSavedJobs = catchAsync(async (req, res, next) => {
- 
   const userId = req.user.id;
 
   const savedJobs = await SavedJob.find({ user: userId }).populate("job");

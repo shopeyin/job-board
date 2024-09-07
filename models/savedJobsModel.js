@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const savedJobSchema = new mongoose.Schema({
+const SavedJobSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
@@ -18,7 +18,7 @@ const savedJobSchema = new mongoose.Schema({
 });
 
 
-savedJobSchema.pre(/^find/, function (next) {
+SavedJobSchema.pre(/^find/, function (next) {
   this.populate({
     path: "job",
     select: "-__v",
@@ -27,4 +27,4 @@ savedJobSchema.pre(/^find/, function (next) {
   next();
 });
 
-module.exports = mongoose.model("SavedJob", savedJobSchema);
+module.exports = mongoose.model("SavedJob", SavedJobSchema);

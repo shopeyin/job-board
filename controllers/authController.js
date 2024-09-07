@@ -19,22 +19,62 @@ const createSendToken = (user, statusCode, response) => {
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
+    sameSite: "None",
+    secure: process.env.NODE_ENV === "production",
   };
-  if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
 
   response.cookie("jwt", token, cookieOptions);
 
-  // // Remove password from output
-  user.password = undefined;
+  // Convert user document to plain JavaScript object
+  const userObj = user.toObject ? user.toObject() : { ...user };
+
+  // Add the token to the plain user object
+  userObj.token = token;
+
+  // Remove password from output
+  userObj.password = undefined;
+
+  console.log(userObj); // Verify the structure of the user object
 
   response.status(statusCode).json({
     status: "success",
     token,
     data: {
-      user,
+      user: userObj, // Send the modified user object
     },
   });
 };
+
+// const createSendToken = (user, statusCode, response) => {
+//   const token = signToken(user._id);
+//   const cookieOptions = {
+//     expires: new Date(
+//       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+//     ),
+//     httpOnly: true,
+//     maxAge: 24 * 60 * 60 * 1000,
+//     sameSite: "None",
+
+//     secure: process.env.NODE_ENV === "production",
+//   };
+
+//   response.cookie("jwt", token, cookieOptions);
+
+//   user.token = token;
+
+//   // // Remove password from output
+//   user.password = undefined;
+
+//   response.status(statusCode).json({
+//     status: "success",
+//     token,
+//     data: {
+//       // token,
+//       user,
+//     },
+//   });
+// };
+
 exports.signup = catchAsync(async (request, response, next) => {
   const newUser = await User.create({
     name: request.body.name,
@@ -56,21 +96,41 @@ exports.login = catchAsync(async (request, response, next) => {
   }
 
   const user = await User.findOne({ email }).select("+password");
+  // const user = await User.findOne({ email }).select('+password name _id role email');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("Incorrect email or password", 401));
   }
 
   createSendToken(user, 200, response);
+  // const userData = {
+  //   name: user.name,
+  //   id: user._id,
+  //   role: user.role,
+  //   email: user.email,
+  // };
+
+  // createSendToken(userData, 200, response);
 });
 
+exports.logout = (req, res) => {
+  res.cookie("jwt", "loggedout", {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ status: "success" });
+};
+
 exports.protect = catchAsync(async (request, response, next) => {
+  console.log(request.cookies, "HERE");
   let token;
   if (
     request.headers.authorization &&
     request.headers.authorization.startsWith("Bearer")
   ) {
     token = request.headers.authorization.split(" ")[1];
+  } else if (request.cookies.jwt) {
+    token = request.cookies.jwt;
   }
 
   if (!token) {
@@ -93,26 +153,26 @@ exports.protect = catchAsync(async (request, response, next) => {
     return next(
       new AppError("User recently changed password! Please log in again.", 401)
     );
-    }
-    
-    // userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
-    //     if (this.passwordChangedAt) {
-    //       const changedTimestamp = parseInt(
-    //         this.passwordChangedAt.getTime() / 1000,
-    //         10
-    //       );
-      
-    //       return JWTTimestamp < changedTimestamp;
-    //     }
-      
-    //     // False means NOT changed
-    //     return false;
-    //   };
+  }
+
+  // userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  //     if (this.passwordChangedAt) {
+  //       const changedTimestamp = parseInt(
+  //         this.passwordChangedAt.getTime() / 1000,
+  //         10
+  //       );
+
+  //       return JWTTimestamp < changedTimestamp;
+  //     }
+
+  //     // False means NOT changed
+  //     return false;
+  //   };
 
   // GRANT ACCESS TO PROTECTED ROUTE
   request.user = currentUser;
 
-  //   response.locals.user = currentUser;
+  response.locals.user = currentUser;
 
   next();
 });
@@ -208,5 +268,3 @@ exports.updatePassword = catchAsync(async (request, response, next) => {
 
   createSendToken(user, 200, response);
 });
-
-

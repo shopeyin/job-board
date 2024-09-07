@@ -2,49 +2,56 @@ const Application = require("../models/applicationModel");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
-exports.getAllJobsApplications = catchAsync(async (request, response, next) => {
+exports.getAllApplicationsByJob = catchAsync(
+  async (request, response, next) => {
+    let filter;
+    if (request.params.jobId) {
+      filter = { job: request.params.jobId };
+    }
+    const applications = await Application.find(filter)
+      .populate("applicant")
+      .populate("job")
+      .exec();
 
-  let filter;
-  if (request.params.jobId) {
-    filter = { job: request.params.jobId };
+    // const applications = await Application.find({ job: request.params.Id })
+    //   .populate("applicant")
+    //   .populate("job")
+    //   .exec();
+
+    response.status(200).json({
+      status: "success",
+      results: applications.length,
+      data: {
+        applications,
+      },
+    });
   }
-  const applications = await Application.find(filter)
-    .populate("applicant")
-    .populate("job")
-    .exec();
+);
 
-  // const applications = await Application.find({ job: request.params.Id })
-  //   .populate("applicant")
-  //   .populate("job")
-  //   .exec();
-
-  response.status(200).json({
-    status: "success",
-    results: applications.length,
-    data: {
-      applications,
-    },
-  });
-});
+exports.getAllApplicationsByApplicant = catchAsync(
+  async (request, response, next) => {
+    const applications = await Application.find({ applicant: request.user._id })
+      .populate("applicant")
+      .populate("job")
+      .exec();
+    console.log(applications);
+    response.status(200).json({
+      status: "success",
+      results: applications.length,
+      data: {
+        applications,
+      },
+    });
+  }
+);
 
 exports.createJobApplication = catchAsync(async (request, response, next) => {
-
   if (!request.body.job) {
     request.body.job = request.params.jobId;
   }
 
   if (!request.body.applicant) {
     request.body.applicant = request.user._id;
-  }
-
-  // Check if the job has already been saved by this user
-  const existingApplication = await Application.findOne({
-    applicant: request.user._id,
-    job: request.params.jobId,
-  });
-
-  if (existingApplication) {
-    return next(new AppError("You have already applied for this job.", 400));
   }
 
   const newApplication = await Application.create(request.body);

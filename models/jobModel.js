@@ -93,6 +93,7 @@ const JobSchema = new mongoose.Schema({
   },
 });
 
+
 // JobSchema.index({ title: 'text', description: 'text', requirements: 'text' });
 
 // DOCUMENT MIDDLEWARE: runs before .save() and .create()
