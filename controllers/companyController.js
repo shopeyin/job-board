@@ -28,10 +28,18 @@ exports.createCompany = catchAsync(async (request, response, next) => {
 });
 
 exports.getCompany = catchAsync(async (request, response, next) => {
+  // const company = request.params.created_by
+  //   ? await Company.findOne({ created_by: request.params.created_by })
+  //   : await Company.findById(request.params.id);
+
   const company = await Company.findById(request.params.id);
+
   if (!company) {
-    return next(new AppError("No company found with that ID", 404));
+    return next(
+      new AppError("No company found with that ID or created_by", 404)
+    );
   }
+
   response.status(200).json({
     status: "success",
     data: {
@@ -41,7 +49,7 @@ exports.getCompany = catchAsync(async (request, response, next) => {
 });
 
 // exports.getJobsByCompany = catchAsync(async (request, response, next) => {
- 
+
 //   const jobs = await Job.find({
 //     company: request.params.id,
 //     posted_by: request.user._id,
@@ -78,6 +86,31 @@ exports.updateCompany = catchAsync(async (request, response, next) => {
     },
   });
 });
+
+// exports.updateCompanyByCreatedBy = catchAsync(async (req, res) => {
+//   const { created_by } = req.params;
+//   const updatedData = req.body;
+
+//   const company = await Company.findOneAndUpdate(
+//     { created_by: created_by }, // Find the company by 'created_by'
+//     updatedData, // Update with the new data
+//     { new: true, runValidators: true } // Return the updated document and run validators
+//   );
+
+//   if (!company) {
+//     return res.status(404).json({
+//       status: "fail",
+//       message: "Company not found",
+//     });
+//   }
+
+//   res.status(200).json({
+//     status: "success",
+//     data: {
+//       company,
+//     },
+//   });
+// });
 
 exports.deleteCompany = catchAsync(async (request, response, next) => {
   const company = await Company.findByIdAndDelete(request.params.id);

@@ -12,6 +12,10 @@ router.patch("/resetPassword/:token", authController.resetPassword);
 router.route("/jobSeekers").get(userController.getAllJobSeekers);
 router.route("/jobSeekers/:id").get(userController.getJobSeeker);
 
+router
+  .route("/:id/company")
+  .get(authController.protect, userController.getUserWithCompany);
+
 router.get("/me", authController.protect, userController.getMe);
 
 router.patch(
@@ -32,7 +36,15 @@ router
 router
   .route("/:id")
   .get(userController.getUser)
-  .patch(userController.updateUser)
-  .delete(userController.deleteUser);
+  .patch(
+    authController.protect,
+    authController.restrictTo("admin"),
+    userController.updateUser
+  )
+  .delete(
+    authController.protect,
+    authController.restrictTo("admin"),
+    userController.deleteUser
+  );
 
 module.exports = router;

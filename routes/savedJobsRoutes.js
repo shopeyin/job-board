@@ -16,10 +16,9 @@ router
     savedJobsController.saveJob
   );
 
-router.delete(
-  "/:jobId",
-  authController.protect,
-  savedJobsController.unsaveJob
-);
+router
+  .route("/:jobId")
+  .get(authController.protect, savedJobsController.checkSavedJob)
+  .delete(authController.protect, savedJobsController.unsaveJob);
 
 module.exports = router;

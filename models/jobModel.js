@@ -93,14 +93,17 @@ const JobSchema = new mongoose.Schema({
   },
 });
 
-
 // JobSchema.index({ title: 'text', description: 'text', requirements: 'text' });
 
-// DOCUMENT MIDDLEWARE: runs before .save() and .create()
-JobSchema.pre('save', function(next) {
-  this.slug = slugify(this.title, { lower: true });
+// Pre-save middleware to create the slug with the first 4 characters of the ID
+JobSchema.pre("save", function (next) {
+  if (!this.slug) {
+    const idPart = this._id.toString().slice(-5);
+    this.slug = slugify(`${this.title}-${idPart}`, { lower: true });
+  }
   next();
 });
 
-
 module.exports = mongoose.model("Job", JobSchema);
+
+

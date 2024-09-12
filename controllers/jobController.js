@@ -21,7 +21,9 @@ exports.lastXdays = async (request, response, next) => {
 exports.getAllJobs = catchAsync(async (request, response, next) => {
   let filter;
   if (request.params.id) {
-    filter = { company: request.params.id };
+    filter = {
+      posted_by: request.params.id,
+    };
   }
   // Copy request.query into queryObj
   const queryObj = { ...request.query, ...filter };
@@ -49,7 +51,7 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
     queryObj.title = { $regex: queryObj.title, $options: "i" }; // 'i' for case-insensitive
   }
 
-  console.log(queryObj);
+  // console.log(queryObj);
 
   // Build the query
   let query = Job.find(queryObj);
@@ -73,10 +75,10 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
   }
 
   // Handle pagination
-  const page = parseInt(request.query.page, 10) || 1; // Default to page 1 if not provided
-  const limit = parseInt(request.query.limit, 10) || 10; // Default to 10 results per page if not provided
-  const skip = (page - 1) * limit;
-  query = query.skip(skip).limit(limit).populate("company");
+  // const page = parseInt(request.query.page, 10) || 1; // Default to page 1 if not provided
+  // const limit = parseInt(request.query.limit, 10) || 10; // Default to 10 results per page if not provided
+  // const skip = (page - 1) * limit;
+  // query = query.skip(skip).limit(limit).populate("company");
 
   // // Execute the query
   // const jobs = await query.explain();
@@ -90,9 +92,9 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
   response.status(200).json({
     status: "success",
     results: jobs.length,
-    total: totalJobs,
-    page,
-    totalPages: Math.ceil(totalJobs / limit),
+    // total: totalJobs,
+    // page,
+    // totalPages: Math.ceil(totalJobs / limit),
     data: {
       jobs,
     },
@@ -111,11 +113,12 @@ exports.getJob = catchAsync(async (request, response, next) => {
     },
   });
 });
+
 exports.createJob = catchAsync(async (request, response, next) => {
   const companyId = await Company.findOne({ created_by: request.user._id });
   request.body.posted_by = request.user._id;
   request.body.company = companyId._id;
-
+console.log(request.body, 'create job')
   const newJob = await Job.create(request.body);
 
   response.status(201).json({
@@ -125,14 +128,34 @@ exports.createJob = catchAsync(async (request, response, next) => {
     },
   });
 });
+// exports.updateJob = catchAsync(async (request, response, next) => {
+//   const job = await Job.findByIdAndUpdate(request.params.id, request.body, {
+//     new: true,
+//     runValidators: true,
+//   });
+//   if (!job) {
+//     return next(new AppError("No job found with that ID", 404));
+//   }
+//   response.status(200).json({
+//     status: "success",
+//     data: {
+//       job,
+//     },
+//   });
+// });
+
 exports.updateJob = catchAsync(async (request, response, next) => {
-  const job = await Job.findByIdAndUpdate(request.params.id, request.body, {
-    new: true,
-    runValidators: true,
-  });
+  let job = await Job.findById(request.params.id);
   if (!job) {
     return next(new AppError("No job found with that ID", 404));
   }
+
+  // Update the fields manually
+  Object.assign(job, request.body);
+
+  // Save the job and run validators
+  await job.save();
+
   response.status(200).json({
     status: "success",
     data: {
@@ -140,6 +163,7 @@ exports.updateJob = catchAsync(async (request, response, next) => {
     },
   });
 });
+
 exports.deleteJob = catchAsync(async (request, response, next) => {
   const job = await Job.findByIdAndDelete(request.params.id);
 

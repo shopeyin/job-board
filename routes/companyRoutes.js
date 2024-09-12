@@ -14,14 +14,19 @@ router
   );
 
 // router
+//   .route("/updatecompanybyuser/:created_by")
+//   .patch(companyController.updateCompanyByCreatedBy);
+
+// router.route('/created_by/:created_by').get( companyController.getCompany);
+// router
 //   .route("/:id/jobs")
 //   .get(authController.protect, companyController.getJobsByCompany);
 
-router.use('/:id/jobs', jobRouter)
+router.use("/:id/jobs", jobRouter);
 
 router
   .route("/:id")
-  .get(companyController.getCompany)
+  .get(authController.protect, companyController.getCompany)
   .patch(
     authController.protect,
     authController.restrictTo("admin", "employer"),

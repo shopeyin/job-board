@@ -3,7 +3,6 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 
 exports.saveJob = catchAsync(async (request, response, next) => {
- 
   if (!request.body.jobId) {
     request.body.jobId = request.params.jobId;
   }
@@ -17,6 +16,8 @@ exports.saveJob = catchAsync(async (request, response, next) => {
     job: request.body.jobId,
   });
 
+  console.log(existingSavedJob, "here");
+
   if (existingSavedJob) {
     return next(new AppError("You have already saved this job.", 400));
   }
@@ -26,13 +27,42 @@ exports.saveJob = catchAsync(async (request, response, next) => {
     user: request.body.userId,
     job: request.body.jobId,
   });
- 
 
   response.status(201).json({
     status: "success",
     data: {
       savedJob,
     },
+  });
+});
+
+exports.checkSavedJob = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+  const jobId = req.params.jobId;
+
+
+  console.log(userId, jobId)
+  
+  const existingSavedJob = await SavedJob.findOne({
+    user: userId,
+    job: jobId,
+  });
+
+
+  console.log(existingSavedJob, "existing");
+
+  // If a saved job exists, return true
+  if (existingSavedJob) {
+    return res.status(200).json({
+      status: "success",
+      data: true, // Job is already saved
+    });
+  }
+
+  // If no saved job is found, return false
+  res.status(200).json({
+    status: "success",
+    data: false, // Job is not saved
   });
 });
 

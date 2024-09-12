@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const validator = require("validator");
+const Company = require("./companyModel");
 
 const workExperienceSchema = new mongoose.Schema({
   company: {
@@ -110,7 +111,13 @@ const userSchema = new mongoose.Schema(
     },
     workExperience: [workExperienceSchema],
     education: [educationSchema],
+
+    company: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
   },
+
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
@@ -139,6 +146,27 @@ userSchema.pre("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next();
 
   this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+userSchema.pre("save", async function (next) {
+  // Only run this function for new employers
+  if (this.isNew && this.role === "employer") {
+    try {
+      const company = await Company.create({
+        name: this.name, // Use user's name as the company name
+        email: this.email, // Use user's email as the company email
+        location: "Default Location", // Set a default location or use another method to provide this
+        created_by: this._id, // Link the company to the user
+      });
+
+      // Update the user's company field with the created company ID
+      this.company = company._id;
+    } catch (error) {
+      console.error("Error creating company:", error);
+      return next(error); // Pass the error to the next middleware
+    }
+  }
   next();
 });
 

@@ -1,6 +1,7 @@
 const User = require("./../models/userModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const { request } = require("../app");
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
@@ -16,6 +17,15 @@ exports.getAllUsers = catchAsync(async (request, response, next) => {
     status: "success",
     results: users.length,
     data: { users },
+  });
+});
+
+exports.getUserWithCompany = catchAsync(async (request, response, next) => {
+  const user = await User.findById(request.params.id).populate("company");
+  console.log(user);
+  response.status(200).json({
+    status: "success",
+    data: { user },
   });
 });
 
@@ -103,8 +113,6 @@ exports.updateMe = catchAsync(async (request, response, next) => {
 
   // 3) Update user document
 
- 
-
   const updatedUser = await User.findByIdAndUpdate(
     request.user.id,
     filteredBody,
@@ -161,17 +169,48 @@ exports.createUser = (request, response) => {
   });
 };
 
-exports.updateUser = (request, response) => {
-  response.status(500).json({
-    status: "error",
-    message: "This route is not yet defined",
-  });
-};
+// Update User
+exports.updateUser = catchAsync(async (req, res) => {
+  const user = await User.findByIdAndUpdate(
+    req.params.id,
+    {
+      role: req.body.role,
+      name: req.body.name,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
 
-exports.deleteUser = (request, response) => {
-  response.status(500).json({
-    status: "error",
+  if (!user) {
+    return res.status(404).json({
+      status: "fail",
+      message: "No user found with that ID",
+    });
+  }
 
-    message: "This route is not yet defined",
+  res.status(200).json({
+    status: "success",
+    data: {
+      user,
+    },
   });
-};
+});
+
+// Delete User
+exports.deleteUser = catchAsync(async (req, res) => {
+  const user = await User.findByIdAndDelete(req.params.id);
+
+  if (!user) {
+    return res.status(404).json({
+      status: "fail",
+      message: "No user found with that ID",
+    });
+  }
+
+  res.status(204).json({
+    status: "success",
+    data: null,
+  });
+});

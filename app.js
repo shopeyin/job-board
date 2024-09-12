@@ -27,7 +27,7 @@ if (process.env.NODE_ENV === "development") {
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:3001", // Your Next.js app's URL
+    origin: "http://localhost:3000", // Your Next.js app's URL
     credentials: true, // Allow credentials (cookies) to be sent
   })
 );
@@ -73,10 +73,10 @@ app.get("/", (req, res) => {
 });
 
 app.use((request, response, next) => {
-  console.log(
-    "Hello  from the global middleware, works on every request/route",
-    request.cookies
-  );
+  // console.log(
+  //   "Hello  from the global middleware, works on every request/route",
+  //   request.cookies
+  // );
   next();
 });
 

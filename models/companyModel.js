@@ -1,4 +1,6 @@
+// companyModel.js
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 const CompanySchema = new mongoose.Schema({
   name: {
@@ -7,6 +9,13 @@ const CompanySchema = new mongoose.Schema({
     minlength: [2, "Company name must be at least 2 characters long"],
     maxlength: [100, "Company name cannot exceed 100 characters"],
     unique: true,
+  },
+  email: {
+    type: String,
+    required: [true, "Please provide an email"],
+    unique: true,
+    lowercase: true,
+    validate: [validator.isEmail, "Please provide a valid email"],
   },
   location: {
     type: String,
@@ -20,6 +29,7 @@ const CompanySchema = new mongoose.Schema({
     type: String,
     match: [/^https?:\/\/[^\s$.?#].[^\s]*$/, "Please enter a valid URL"],
     unique: true,
+    sparse: true, // This allows multiple nulls to be inserted
   },
   description: {
     type: String,
@@ -41,6 +51,7 @@ const CompanySchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
 CompanySchema.index({ created_by: 1 }, { unique: true });
 
 module.exports = mongoose.model("Company", CompanySchema);

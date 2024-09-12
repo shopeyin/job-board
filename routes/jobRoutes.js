@@ -7,8 +7,6 @@ const router = express.Router({ mergeParams: true });
 
 router.use("/:jobId/applications", applicationRouter);
 
-
-
 router
   .route("/last-x-days")
   .get(jobController.lastXdays, jobController.getAllJobs);
@@ -21,6 +19,8 @@ router
     authController.restrictTo("admin", "employer"),
     jobController.createJob
   );
+
+
 
 router
   .route("/:id")
