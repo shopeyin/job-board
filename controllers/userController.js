@@ -1,7 +1,12 @@
 const User = require("./../models/userModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
-const { request } = require("../app");
+const multer = require("multer");
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+exports.uploadResume = upload.single("resumes");
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
@@ -12,7 +17,7 @@ const filterObj = (obj, ...allowedFields) => {
 };
 
 exports.getAllUsers = catchAsync(async (request, response, next) => {
-  const users = await User.find();
+  const users = await User.find().select("+active");
   response.status(200).json({
     status: "success",
     results: users.length,
@@ -29,48 +34,98 @@ exports.getUserWithCompany = catchAsync(async (request, response, next) => {
   });
 });
 
+// exports.getAllJobSeekers = catchAsync(async (request, response, next) => {
+//   const queryObj = { ...request.query };
+//   const excludedFields = ["page", "sort", "limit", "fields"];
+//   excludedFields.forEach((el) => delete queryObj[el]);
+//   queryObj.role = "job_seeker";
+
+//   if (queryObj.skills) {
+//     const skillsArray = queryObj.skills.split(",");
+//     queryObj.skills = {
+//       $elemMatch: {
+//         $in: skillsArray.map((skill) => new RegExp(skill, "i")), // Partial matching with regex for each skill
+//       },
+//     };
+//   }
+
+//   if (queryObj.education) {
+//     queryObj["education"] = {
+//       $elemMatch: { degree: { $regex: queryObj.education, $options: "i" } }, // Partial matching with regex
+//     };
+//   }
+
+//   if (queryObj.experience) {
+//     queryObj["workExperience"] = {
+//       $elemMatch: {
+//         title: { $regex: queryObj.experience, $options: "i" },
+//       }, // Partial matching with regex
+//     };
+
+//     delete queryObj.experience;
+//   }
+
+//   const jobSeekers = await User.find(queryObj).select("-__v");
+//   response.status(200).json({
+//     status: "success",
+//     results: jobSeekers.length,
+//     data: { jobSeekers },
+//   });
+// });
+
 exports.getAllJobSeekers = catchAsync(async (request, response, next) => {
-  const queryObj = { ...request.query };
-  const excludedFields = ["page", "sort", "limit", "fields"];
-  excludedFields.forEach((el) => delete queryObj[el]);
-  queryObj.role = "job_seeker";
+  const { search } = request.query;
+  const queryObj = { role: "job_seeker" };
 
-  // if (queryObj.skills) {
-  //   queryObj.skills = { $all: queryObj.skills.split(",") };
-  // }
+  // If a search term is provided, search across skills, education, and experience
+  if (search) {
+    const searchRegex = new RegExp(search, "i"); // Case-insensitive search
 
-  if (queryObj.skills) {
-    const skillsArray = queryObj.skills.split(",");
-    queryObj.skills = {
-      $elemMatch: {
-        $in: skillsArray.map((skill) => new RegExp(skill, "i")), // Partial matching with regex for each skill
+    queryObj.$or = [
+      {
+        skills: {
+          $elemMatch: {
+            $in: [searchRegex], // Search term in skills array
+          },
+        },
       },
-    };
+      {
+        education: {
+          $elemMatch: { degree: { $regex: searchRegex } }, // Search term in education degree
+        },
+      },
+      {
+        workExperience: {
+          $elemMatch: { title: { $regex: searchRegex } }, // Search term in work experience title
+        },
+      },
+    ];
   }
 
-  if (queryObj.education) {
-    queryObj["education"] = {
-      $elemMatch: { degree: { $regex: queryObj.education, $options: "i" } }, // Partial matching with regex
-    };
-  }
+  const page = parseInt(request.query.page, 10) || 1;
+  const limit = parseInt(request.query.limit, 10) || 5;
+  const skip = (page - 1) * limit;
 
-  if (queryObj.experience) {
-    queryObj["workExperience"] = {
-      $elemMatch: {
-        title: { $regex: queryObj.experience, $options: "i" },
-      }, // Partial matching with regex
-    };
+  const jobSeekers = await User.find(queryObj)
+    .select("-__v")
+    .skip(skip)
+    .limit(limit);
+  
+  console.log(jobSeekers,'-----')
 
-    delete queryObj.experience;
-  }
+  const totalDocuments = await User.countDocuments(queryObj);
 
-  const jobSeekers = await User.find(queryObj).select("-__v");
   response.status(200).json({
+    'datahere':'datahere',
     status: "success",
     results: jobSeekers.length,
+    totalDocuments,
+    page,
+    totalPages: Math.ceil(totalDocuments / limit),
     data: { jobSeekers },
   });
 });
+
 exports.getJobSeeker = catchAsync(async (request, response, next) => {
   const jobSeeker = await User.findOne({
     _id: request.params.id,
@@ -83,13 +138,6 @@ exports.getJobSeeker = catchAsync(async (request, response, next) => {
   });
 });
 
-exports.updateUser = (request, response) => {
-  response.status(500).json({
-    status: "error",
-    message: "This route is not yet defined",
-  });
-};
-
 exports.updateMe = catchAsync(async (request, response, next) => {
   // 1) Create error if user POSTs password data
   if (request.body.password || request.body.passwordConfirm) {
@@ -101,18 +149,29 @@ exports.updateMe = catchAsync(async (request, response, next) => {
     );
   }
 
+  // console.log(request.body);
+  // console.log(request.file);
   const filteredBody = filterObj(
     request.body,
     "name",
     "email",
     "skills",
     "workExperience",
-    "education"
+    "education",
+    "resumes"
   ); // allowed fields;
-  // if (req.file) filteredBody.photo = req.file.filename;
 
-  // 3) Update user document
+  if (request.file) {
+    // If a resume is uploaded, store it as binary data
+    const resume = {
+      name: request.file.originalname, // Original file name
+      data: request.file.buffer, // File content as binary data (Buffer)
+      contentType: request.file.mimetype, // MIME type of the file
+    };
 
+    // Add resume to the filteredBody object to update the user's resume
+    filteredBody.resumes = resume;
+  }
   const updatedUser = await User.findByIdAndUpdate(
     request.user.id,
     filteredBody,
@@ -161,21 +220,35 @@ exports.getUser = catchAsync(async (request, response) => {
   });
 });
 
-exports.createUser = (request, response) => {
-  response.status(500).json({
-    status: "error",
-
-    message: "This route is not yet defined",
+exports.createUser = catchAsync(async (request, response) => {
+  const newUser = await User.create({
+    name: request.body.name,
+    email: request.body.email,
+    password: request.body.password,
+    passwordConfirm: request.body.passwordConfirm,
+    passwordChangedAt: request.body.passwordChangedAt,
+    role: request.body.role,
   });
-};
+  response.status(201).json({
+    status: "success",
+    data: {
+      newUser,
+    },
+  });
+});
 
 // Update User
 exports.updateUser = catchAsync(async (req, res) => {
+  // Convert 'active' field from string to boolean
+  const activeStatus = req.body.active === "true";
+
+  // Find and update the user
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
       role: req.body.role,
       name: req.body.name,
+      active: activeStatus, // Ensure 'active' is updated if provided
     },
     {
       new: true,
@@ -212,5 +285,42 @@ exports.deleteUser = catchAsync(async (req, res) => {
   res.status(204).json({
     status: "success",
     data: null,
+  });
+});
+
+exports.getUserStats = catchAsync(async (request, response) => {
+  const stats = await User.aggregate([
+    {
+      $facet: {
+        totalUsers: [
+          {
+            $count: "total",
+          },
+        ],
+        roleStats: [
+          {
+            $group: {
+              _id: "$role",
+              count: { $sum: 1 },
+            },
+          },
+        ],
+        activeUsers: [
+          {
+            $match: { active: true },
+          },
+          {
+            $count: "activeCount",
+          },
+        ],
+      },
+    },
+  ]);
+
+  response.status(200).json({
+    status: "success",
+    data: {
+      stats,
+    },
   });
 });

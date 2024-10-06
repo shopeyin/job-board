@@ -64,6 +64,30 @@ exports.createJobApplication = catchAsync(async (request, response, next) => {
   });
 });
 
+exports.checkAppliedJob = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+  const jobId = req.params.jobId;
+
+  const existingAppliedJob = await Application.findOne({
+    applicant: userId,
+    job: jobId,
+  });
+
+ 
+
+  if (existingAppliedJob) {
+    return res.status(200).json({
+      status: "success",
+      data: true,
+    });
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: false,
+  });
+});
+
 exports.updateJobApplications = catchAsync(async (request, response, next) => {
   const application = await Application.findByIdAndUpdate(
     request.params.applicationId,

@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const slugify = require("slugify");
-const validator = require("validator");
 
 const JobSchema = new mongoose.Schema({
   title: {
@@ -62,13 +61,12 @@ const JobSchema = new mongoose.Schema({
   },
   work_arrangement: {
     type: String,
-    required: [true, "choose a working arrangement"],
+    required: [true, "Choose a working arrangement"],
     enum: {
       values: ["remote", "hybrid", "onsite"],
       message: "{VALUE} is not a working arrangement",
     },
   },
-
   contract_type: {
     type: String,
     enum: {
@@ -82,7 +80,15 @@ const JobSchema = new mongoose.Schema({
     ref: "User",
     required: [true, "Posted by user ID is required"],
   },
-
+  closing_date: {
+    type: Date,
+    required: [true, "Closing date is required"],
+  },
+  status: {
+    type: String,
+    enum: ["open", "closed"],
+    default: "open",
+  },
   created_at: {
     type: Date,
     default: Date.now(),
@@ -93,17 +99,19 @@ const JobSchema = new mongoose.Schema({
   },
 });
 
-// JobSchema.index({ title: 'text', description: 'text', requirements: 'text' });
-
 // Pre-save middleware to create the slug with the first 4 characters of the ID
 JobSchema.pre("save", function (next) {
   if (!this.slug) {
     const idPart = this._id.toString().slice(-5);
     this.slug = slugify(`${this.title}-${idPart}`, { lower: true });
   }
+
+  // Check if the job has expired
+  if (this.closing_date && new Date() > this.closing_date) {
+    this.status = "closed";
+  }
+
   next();
 });
 
 module.exports = mongoose.model("Job", JobSchema);
-
-

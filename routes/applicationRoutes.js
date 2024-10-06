@@ -12,6 +12,10 @@ router
   );
 
 router
+  .route("/:jobId")
+  .get(authController.protect, applicationController.checkAppliedJob);
+
+router
   .route("/")
   .get(authController.protect, applicationController.getAllApplicationsByJob)
   .post(

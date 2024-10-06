@@ -12,6 +12,14 @@ router
   .get(jobController.lastXdays, jobController.getAllJobs);
 
 router
+  .route("/job-stats")
+  .get(authController.protect, authController.restrictTo("admin"), jobController.getJobStatistics);
+  
+router
+  .route("/active-job-stats")
+  .get(authController.protect,authController.restrictTo("employer"), jobController.getActiveJobsByUser);
+
+router
   .route("/")
   .get(jobController.getAllJobs)
   .post(
@@ -19,8 +27,6 @@ router
     authController.restrictTo("admin", "employer"),
     jobController.createJob
   );
-
-
 
 router
   .route("/:id")

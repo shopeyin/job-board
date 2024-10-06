@@ -12,6 +12,7 @@ const jobRoutes = require("./routes/jobRoutes");
 const companyRoutes = require("./routes/companyRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const savedJobsRoutes = require("./routes/savedJobsRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
@@ -22,8 +23,12 @@ app.use(helmet());
 
 //Middleware
 if (process.env.NODE_ENV === "development") {
+  console.log("DEVELOPMENT");
   app.use(morgan("dev"));
+} else {
+  console.log("PRODUCTIOn");
 }
+
 app.use(cookieParser());
 app.use(
   cors({
@@ -85,6 +90,7 @@ app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/companies", companyRoutes);
 app.use("/api/v1/applications", applicationRoutes);
 app.use("/api/v1/savejobs", savedJobsRoutes);
+app.use("/api/v1/chats", chatRoutes);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

@@ -22,11 +22,11 @@ router
 //   .route("/:id/jobs")
 //   .get(authController.protect, companyController.getJobsByCompany);
 
-router.use("/:id/jobs", jobRouter);
+ router.use("/:id/jobs", jobRouter);
 
 router
   .route("/:id")
-  .get(authController.protect, companyController.getCompany)
+  .get( companyController.getCompany)
   .patch(
     authController.protect,
     authController.restrictTo("admin", "employer"),

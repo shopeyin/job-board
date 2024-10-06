@@ -54,6 +54,12 @@ const educationSchema = new mongoose.Schema({
   },
 });
 
+const resumeSchema = new mongoose.Schema({
+  name: String,
+  data: Buffer,
+  contentType: String,
+});
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -101,6 +107,12 @@ const userSchema = new mongoose.Schema(
 
     resume: {
       type: String,
+      // validate: {
+      //   validator: function (val) {
+      //     return val.length <= 5;
+      //   },
+      //   message: "You can upload a maximum of 5 resumes.",
+      // },
     },
 
     skills: {
@@ -171,10 +183,10 @@ userSchema.pre("save", async function (next) {
 });
 
 // QUERY MIDDLEWARE
-userSchema.pre(/^find/, function (next) {
-  this.find({ active: true });
-  next();
-});
+// userSchema.pre(/^find/, function (next) {
+//   this.find({ active: true });
+//   next();
+// });
 
 userSchema.methods.correctPassword = async function (
   candidatePassword,

@@ -23,7 +23,6 @@ const CompanySchema = new mongoose.Schema({
   },
   logo: {
     type: String,
-    default: "default.jpg",
   },
   website: {
     type: String,

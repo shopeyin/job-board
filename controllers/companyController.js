@@ -28,11 +28,8 @@ exports.createCompany = catchAsync(async (request, response, next) => {
 });
 
 exports.getCompany = catchAsync(async (request, response, next) => {
-  // const company = request.params.created_by
-  //   ? await Company.findOne({ created_by: request.params.created_by })
-  //   : await Company.findById(request.params.id);
 
-  const company = await Company.findById(request.params.id);
+  const company = await Company.findById(request.params.id).populate('created_by');
 
   if (!company) {
     return next(

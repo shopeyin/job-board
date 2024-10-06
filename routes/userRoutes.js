@@ -18,20 +18,36 @@ router
 
 router.get("/me", authController.protect, userController.getMe);
 
+router.get(
+  "/user-stats",
+  authController.protect,
+  authController.restrictTo("admin"),
+  userController.getUserStats
+);
+
 router.patch(
   "/updateMyPassword",
   authController.protect,
   authController.updatePassword
 );
 
-router.patch("/updateMe", authController.protect, userController.updateMe);
+router.patch(
+  "/updateMe",
+  authController.protect,
+  userController.uploadResume,
+  userController.updateMe
+);
 
 router.delete("/deleteMe", authController.protect, userController.deleteMe);
 
 router
   .route("/")
   .get(authController.protect, userController.getAllUsers)
-  .post(userController.createUser);
+  .post(
+    authController.protect,
+    authController.restrictTo("admin"),
+    userController.createUser
+  );
 
 router
   .route("/:id")

@@ -95,11 +95,18 @@ exports.login = catchAsync(async (request, response, next) => {
     return next(new AppError("Please provide email and password"));
   }
 
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email }).select("+password +active");
   // const user = await User.findOne({ email }).select('+password name _id role email');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("Incorrect email or password", 401));
+  }
+
+  if (!user.active) {
+    return response.status(403).json({
+      status: "fail",
+      message: "Your account is  deleted",
+    });
   }
 
   createSendToken(user, 200, response);
@@ -199,9 +206,10 @@ exports.forgotPassword = catchAsync(async (request, response, next) => {
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateModifiedOnly: true });
 
-  const resetURL = `${request.protocol}://${request.get(
-    "host"
-  )}/api/v1/users/resetPassword/${resetToken}`;
+  // const resetURL = `${request.protocol}://${request.get(
+  //   "host"
+  // )}/api/v1/users/resetPassword/${resetToken}`;
+  const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
 
   const message = `Forgot your password? Submit a request with your new password and confirm to:${resetURL}.\n. If did not forget your password, please ignore this email`;
   // console.log(message, 'MESSAGE');
@@ -218,6 +226,7 @@ exports.forgotPassword = catchAsync(async (request, response, next) => {
       message: "Token sent to the email",
     });
   } catch (err) {
+    console.log(err);
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ validateModifiedOnly: true });
@@ -228,27 +237,41 @@ exports.forgotPassword = catchAsync(async (request, response, next) => {
     );
   }
 });
+
+
 exports.resetPassword = async (request, response, next) => {
+  // 1. Hash the token from the request
   const hashedToken = crypto
     .createHash("sha256")
     .update(request.params.token)
     .digest("hex");
 
+  // 2. Find the user based on the hashed token and check expiration
   const user = await User.findOne({
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gte: Date.now() },
   });
 
+  // 3. If no user found, return an error
   if (!user) {
-    return next(new AppError("Token is invalid or has expired"), 400);
+    return next(new AppError("Token is invalid or has expired", 400));
   }
 
+  // 4. Check if the passwords match
+  if (request.body.password !== request.body.passwordConfirm) {
+    return next(new AppError("Passwords do not match", 400));
+  }
+
+  // 5. Update user password and clear reset token
   user.password = request.body.password;
-  user.passwordConfirm = request.body.passwordConfirm;
+  user.passwordConfirm = request.body.passwordConfirm; // If you have a pre-save hook, you may not need this
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
+
+  // 6. Save the updated user
   await user.save();
 
+  // 7. Send token back to the user
   createSendToken(user, 200, response);
 };
 

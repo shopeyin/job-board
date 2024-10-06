@@ -26,9 +26,8 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
     };
   }
   // Copy request.query into queryObj
+  // console.log(request.query, "here");
   const queryObj = { ...request.query, ...filter };
-
-  console.log(queryObj);
 
   // List of fields to exclude from the query object
   const excludedFields = ["page", "sort", "limit", "fields", "lastDays"];
@@ -75,10 +74,10 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
   }
 
   // Handle pagination
-  // const page = parseInt(request.query.page, 10) || 1; // Default to page 1 if not provided
-  // const limit = parseInt(request.query.limit, 10) || 10; // Default to 10 results per page if not provided
-  // const skip = (page - 1) * limit;
-  // query = query.skip(skip).limit(limit).populate("company");
+  const page = parseInt(request.query.page, 10) || 1; // Default to page 1 if not provided
+  const limit = parseInt(request.query.limit, 10) || 5; // Default to 10 results per page if not provided
+  const skip = (page - 1) * limit;
+  query = query.skip(skip).limit(limit).populate("company");
 
   // // Execute the query
   // const jobs = await query.explain();
@@ -92,9 +91,9 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
   response.status(200).json({
     status: "success",
     results: jobs.length,
-    // total: totalJobs,
-    // page,
-    // totalPages: Math.ceil(totalJobs / limit),
+    total: totalJobs,
+    page,
+    totalPages: Math.ceil(totalJobs / limit),
     data: {
       jobs,
     },
@@ -116,9 +115,10 @@ exports.getJob = catchAsync(async (request, response, next) => {
 
 exports.createJob = catchAsync(async (request, response, next) => {
   const companyId = await Company.findOne({ created_by: request.user._id });
+
   request.body.posted_by = request.user._id;
   request.body.company = companyId._id;
-console.log(request.body, 'create job')
+  console.log(request.body, "create job");
   const newJob = await Job.create(request.body);
 
   response.status(201).json({
@@ -173,5 +173,53 @@ exports.deleteJob = catchAsync(async (request, response, next) => {
   response.status(204).json({
     status: "success",
     data: null,
+  });
+});
+
+exports.getJobStatistics = catchAsync(async (request, response) => {
+  const jobStats = await Job.aggregate([
+    {
+      $facet: {
+        totalJobs: [{ $count: "count" }],
+        activeJobs: [{ $match: { status: "open" } }, { $count: "count" }],
+      },
+    },
+  ]);
+
+  const totalJobs = jobStats[0].totalJobs[0]?.count || 0;
+  const activeJobs = jobStats[0].activeJobs[0]?.count || 0;
+
+  response.status(200).json({
+    status: "success",
+    data: {
+      totalJobs,
+      activeJobs,
+    },
+  });
+});
+
+exports.getActiveJobsByUser = catchAsync(async (request, response) => {
+  const result = await Job.aggregate([
+    {
+      $match: {
+        posted_by: request.user._id, // Match jobs posted by the user
+        status: "open", // Only include jobs with status 'open'
+      },
+    },
+    {
+      $count: "activeJobsCount", // Count the matching documents
+    },
+  ]);
+
+
+
+  // If no results are found, return 0
+  const activeJobsCount = result.length > 0 ? result[0].activeJobsCount : 0;
+
+  response.status(200).json({
+    status: "success",
+    data: {
+      activeJobsCount,
+    },
   });
 });
