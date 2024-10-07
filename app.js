@@ -30,12 +30,33 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.use(cookieParser());
+// app.use(
+//   cors({
+//     origin: "http://localhost:3000", // Your Next.js app's URL
+//     credentials: true, // Allow credentials (cookies) to be sent
+//   })
+// );
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://63.34.170.16:3000",
+  "https://job-b-client.vercel.app/",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000", // Your Next.js app's URL
-    credentials: true, // Allow credentials (cookies) to be sent
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
   })
 );
+
+
+
 
 // app.use(cors(corsOptions));
 

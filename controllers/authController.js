@@ -209,7 +209,7 @@ exports.forgotPassword = catchAsync(async (request, response, next) => {
   // const resetURL = `${request.protocol}://${request.get(
   //   "host"
   // )}/api/v1/users/resetPassword/${resetToken}`;
-  const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
+  const resetURL = `https://job-b-client.vercel.app/reset-password/${resetToken}`;
 
   const message = `Forgot your password? Submit a request with your new password and confirm to:${resetURL}.\n. If did not forget your password, please ignore this email`;
   // console.log(message, 'MESSAGE');
