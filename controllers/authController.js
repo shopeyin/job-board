@@ -212,13 +212,13 @@ exports.forgotPassword = catchAsync(async (request, response, next) => {
   const resetURL = `https://job-b-client.vercel.app/reset-password/${resetToken}`;
 
   const message = `Forgot your password? Submit a request with your new password and confirm to:${resetURL}.\n. If did not forget your password, please ignore this email`;
- 
+
   // console.log(resetURL, 'reset url');
   try {
     await sendEmail({
       email: user.email,
       subject: "Your password reset token (valid for 10 minutes)",
-      message: "MESSAGE",
+      message,
     });
 
     response.status(200).json({
