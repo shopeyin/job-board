@@ -73,9 +73,10 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
     query = query.select("-__v");
   }
 
+  
   // Handle pagination
-  const page = parseInt(request.query.page, 10) || 1; // Default to page 1 if not provided
-  const limit = parseInt(request.query.limit, 10) || 5; // Default to 10 results per page if not provided
+  const page = parseInt(request.query.page, 10) || 1; 
+  const limit = parseInt(request.query.limit, 10) || 10;
   const skip = (page - 1) * limit;
   query = query.skip(skip).limit(limit).populate("company");
 

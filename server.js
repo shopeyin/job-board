@@ -20,7 +20,7 @@ const server = app.listen(port, () => {
 
 
 
-// Set up the cron job here
+//cron job set up
 cron.schedule("0 0 * * *", async () => {
   try {
     const result = await Job.updateMany(

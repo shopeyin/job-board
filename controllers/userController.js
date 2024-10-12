@@ -162,14 +162,13 @@ exports.updateMe = catchAsync(async (request, response, next) => {
   ); // allowed fields;
 
   if (request.file) {
-    // If a resume is uploaded, store it as binary data
+    
     const resume = {
-      name: request.file.originalname, // Original file name
-      data: request.file.buffer, // File content as binary data (Buffer)
-      contentType: request.file.mimetype, // MIME type of the file
+      name: request.file.originalname, 
+      data: request.file.buffer,
+      contentType: request.file.mimetype, 
     };
 
-    // Add resume to the filteredBody object to update the user's resume
     filteredBody.resumes = resume;
   }
   const updatedUser = await User.findByIdAndUpdate(
