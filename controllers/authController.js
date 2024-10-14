@@ -129,7 +129,7 @@ exports.logout = (req, res) => {
 };
 
 exports.protect = catchAsync(async (request, response, next) => {
-  console.log(request.cookies, "HERE");
+ 
   let token;
   if (
     request.headers.authorization &&

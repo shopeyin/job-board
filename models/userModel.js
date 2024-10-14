@@ -7,15 +7,15 @@ const Company = require("./companyModel");
 const workExperienceSchema = new mongoose.Schema({
   company: {
     type: String,
-    required: [true, "Please provide the company's name"],
+    // required: [true, "Please provide the company's name"],
   },
   title: {
     type: String,
-    required: [true, "Please provide your job title"],
+    // required: [true, "Please provide your job title"],
   },
   startDate: {
     type: Date,
-    required: [true, "Please provide the start date"],
+    // required: [true, "Please provide the start date"],
   },
   endDate: {
     type: Date,
@@ -32,18 +32,18 @@ const workExperienceSchema = new mongoose.Schema({
 const educationSchema = new mongoose.Schema({
   institution: {
     type: String,
-    required: [true, "Please provide the name of the institution"],
+    // required: [true, "Please provide the name of the institution"],
   },
   degree: {
     type: String,
-    required: [true, "Please provide your degree"],
+    // required: [true, "Please provide your degree"],
   },
   fieldOfStudy: {
     type: String,
   },
   startDate: {
     type: Date,
-    required: [true, "Please provide the start date"],
+    // required: [true, "Please provide the start date"],
   },
   endDate: {
     type: Date,
@@ -54,11 +54,7 @@ const educationSchema = new mongoose.Schema({
   },
 });
 
-const resumeSchema = new mongoose.Schema({
-  name: String,
-  data: Buffer,
-  contentType: String,
-});
+
 
 const userSchema = new mongoose.Schema(
   {

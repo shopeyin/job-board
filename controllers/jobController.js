@@ -61,8 +61,8 @@ exports.getAllJobs = catchAsync(async (request, response, next) => {
   } else if (request.query.sort === "-salary") {
     query = query.sort("-salary.min");
   } else {
-    // Handle other sorts or default sorting
-    query = query.sort("-created_at"); // Default sort by created_at in descending order
+   
+    query = query.sort("-created_at"); 
   }
 
   // Handle field limiting

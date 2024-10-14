@@ -149,7 +149,7 @@ exports.updateMe = catchAsync(async (request, response, next) => {
     );
   }
 
-  // console.log(request.body);
+   console.log(request.body, 'body here');
   // console.log(request.file);
   const filteredBody = filterObj(
     request.body,
@@ -238,10 +238,10 @@ exports.createUser = catchAsync(async (request, response) => {
 
 // Update User
 exports.updateUser = catchAsync(async (req, res) => {
-  // Convert 'active' field from string to boolean
+  
   const activeStatus = req.body.active === "true";
 
-  // Find and update the user
+
   const user = await User.findByIdAndUpdate(
     req.params.id,
     {
